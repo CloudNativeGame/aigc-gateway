@@ -1,0 +1,12 @@
+  installation:
+    namespace: aigc-gateway
+  image:
+    repository: registry.cn-beijing.aliyuncs.com/chrisliu95/aigc-gateway
+    tag: v0.0.1
+  appId: "32qh5wp6c1q3jofy2myw"
+  appSecret: "35mpn2dk62brjxaduy70"
+  m2mId: "ezxyaol30ld99c7ns5ur"
+  m2mSecret: "g7hly3nwq2omligpyh3k"
+  host: "dashboard.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+  endpoint: "https://logto.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com/"
+  secretName: "tls-logto"

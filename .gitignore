@@ -7,6 +7,18 @@
 *.dll
 *.so
 *.dylib
+**/.DS_Store
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+.mvn
+mvnw*
+
+# vscode
+.vscode
 
 # Test binary, built with `go test -c`
 *.test

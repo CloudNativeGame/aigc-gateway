@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logto
+  namespace: {{ .Values.installation.namespace }}
+  labels:
+    app: logto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logto
+  template:
+    metadata:
+      labels:
+        app: logto
+    spec:
+      containers:
+        - name: logto
+          image: svhd/logto:latest # replace it with your exactly <image_name:tags>
+          command:
+            - "sh"
+            - "-c"
+            - "npm run cli db seed -- --swe && npm start"
+          env:
+            - name: TRUST_PROXY_HEADER
+              value: "1"
+            - name: DB_URL
+              value: "postgres://postgres:p0stgr3s@postgres.{{ .Values.installation.namespace }}.svc.cluster.local:5432/logto"
+            - name: ADMIN_ENDPOINT
+              value: https://{{ .Values.adminEndpoint }}
+            - name: ENDPOINT
+              value: https://{{ .Values.endpoint }}
+          ports:
+            - containerPort: 3001
+              name: signin
+            - containerPort: 3002
+              name: console
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logto
+  namespace: {{ .Values.installation.namespace }}
+  labels:
+    app: logto
+spec:
+  selector:
+    app: logto
+  ports:
+    - protocol: TCP
+      name: signin
+      port: 3001
+      targetPort: 3001
+    - protocol: TCP
+      name: console
+      port: 3002
+      targetPort: 3002
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logto
+  namespace: {{ .Values.installation.namespace }}
+  annotations:
+    "nginx.ingress.kubernetes.io/proxy-cookie-domain": "$host .$host"
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.endpoint }}
+      secretName:  {{ .Values.secretName }}
+  rules:
+    - host: {{ .Values.endpoint }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: logto
+                port:
+                  number: 3001
+            pathType: ImplementationSpecific
+            path: "/"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logto-admin
+  namespace: {{ .Values.installation.namespace }}
+  annotations:
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.adminEndpoint }}
+      secretName: {{ .Values.secretName }}
+  rules:
+    - host: {{ .Values.adminEndpoint }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: logto
+                port:
+                  number: 3002
+            pathType: ImplementationSpecific
+            path: "/"

@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logto
+  labels:
+    app: logto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logto
+  template:
+    metadata:
+      labels:
+        app: logto
+    spec:
+      containers:
+        - name: logto
+          image: svhd/logto:latest # replace it with your exactly <image_name:tags>
+          command:
+            - "sh"
+            - "-c"
+            - "npm run cli db seed -- --swe && npm start"
+          env:
+            - name: TRUST_PROXY_HEADER
+              value: "1"
+            - name: DB_URL
+              value: "postgres://postgres:p0stgr3s@postgres.default.svc.cluster.local:5432/logto"
+            - name: ADMIN_ENDPOINT
+              value: "https://logto-admin.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+            - name: ENDPOINT
+              value: "https://logto.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+          ports:
+            - containerPort: 3001
+              name: signin
+            - containerPort: 3002
+              name: console
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logto
+  labels:
+    app: logto
+spec:
+  selector:
+    app: logto
+  ports:
+    - protocol: TCP
+      name: signin
+      port: 3001
+      targetPort: 3001
+    - protocol: TCP
+      name: console
+      port: 3002
+      targetPort: 3002
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logto
+  annotations:
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "logto.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+      secretName: tls-logto
+  rules:
+    - host: "logto.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+      http:
+        paths:
+          - backend:
+              service:
+                name: logto
+                port:
+                  number: 3001
+            pathType: ImplementationSpecific
+            path: "/"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logto-admin
+  annotations:
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "logto-admin.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+      secretName: tls-logto
+  rules:
+    - host: "logto-admin.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+      http:
+        paths:
+          - backend:
+              service:
+                name: logto
+                port:
+                  number: 3002
+            pathType: ImplementationSpecific
+            path: "/"

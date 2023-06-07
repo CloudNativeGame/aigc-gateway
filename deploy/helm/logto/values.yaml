@@ -1,0 +1,6 @@
+  adminEndpoint: "logto-admin.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+  endpoint: "logto.c5464a5f2c39341d3b3eda6e2dd37b55.cn-hangzhou.alicontainer.com"
+  secretName: "tls-logto"
+  installation:
+    namespace: aigc-gateway
+    createNamespace: false

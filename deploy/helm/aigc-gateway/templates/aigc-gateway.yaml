@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aigc-gateway
+  namespace: {{ .Values.installation.namespace }}
+  labels:
+    app: aigc-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aigc-gateway
+  template:
+    metadata:
+      labels:
+        app: aigc-gateway
+    spec:
+      containers:
+        - name: aigc-gateway
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command:
+            - "./aigc-gateway"
+          env:
+            - name: App_Id
+              value: {{ .Values.appId }}
+            - name: App_Secret
+              value: {{ .Values.appSecret }}
+            - name: M2M_Id
+              value: {{ .Values.m2mId }}
+            - name: M2M_Secret
+              value: {{ .Values.m2mSecret }}
+            - name: Redirect_Url
+              value: https://{{ .Values.host }}/
+            - name: Endpoint
+              value: {{ .Values.endpoint }}
+          ports:
+            - containerPort: 8090
+              name: dashboard
+      serviceAccountName: aigc-gateway
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aigc-gateway
+  namespace: {{ .Values.installation.namespace }}
+  labels:
+    app: aigc-gateway
+spec:
+  selector:
+    app: aigc-gateway
+  ports:
+    - protocol: TCP
+      name: dashboard
+      port: 8090
+      targetPort: 8090
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aigc-gateway
+  namespace: {{ .Values.installation.namespace }}
+  annotations:
+    "nginx.ingress.kubernetes.io/ssl-redirect": "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.host }}
+      secretName: {{ .Values.secretName }}
+  rules:
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: aigc-gateway
+                port:
+                  number: 8090
+            pathType: ImplementationSpecific
+            path: "/"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aigc-gateway
+  namespace: {{ .Values.installation.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aigc-gateway
+rules:
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameservers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameservers/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameservers/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameserversets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameserversets/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - game.kruise.io
+    resources:
+      - gameserversets/status
+    verbs:
+      - get
+      - patch
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aigc-gateway
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aigc-gateway
+subjects:
+  - kind: ServiceAccount
+    name: aigc-gateway
+    namespace: {{ .Values.installation.namespace }}
