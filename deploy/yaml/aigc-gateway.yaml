@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: aigc-gateway
-          image: registry.cn-beijing.aliyuncs.com/chrisliu95/aigc-gateway:5-19-8 # replace it with your exactly <image_name:tags>
+          image: registry.cn-beijing.aliyuncs.com/acs/aigc-gateway:v0.1.0 # replace it with your exactly <image_name:tags>
           command:
             - "./aigc-gateway"
           env:
