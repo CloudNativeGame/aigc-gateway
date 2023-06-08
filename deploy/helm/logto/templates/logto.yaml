@@ -64,7 +64,6 @@ metadata:
   name: logto
   namespace: {{ .Values.installation.namespace }}
   annotations:
-    "nginx.ingress.kubernetes.io/proxy-cookie-domain": "$host .$host"
     "nginx.ingress.kubernetes.io/ssl-redirect": "true"
 spec:
   ingressClassName: nginx
