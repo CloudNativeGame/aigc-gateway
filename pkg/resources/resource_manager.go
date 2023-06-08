@@ -95,20 +95,7 @@ func (rm *ResourceManager) GetResourceEndpoint(meta *ResourceMeta) (string, erro
 	}, gs)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			gss := &gamekruiseiov1alpha1.GameServerSet{}
-			err := rm.Get(context.Background(), types.NamespacedName{
-				Name:      meta.Name,
-				Namespace: meta.Namespace,
-			}, gss)
-			if err != nil {
-				return "", NewResourceError(ApiCallError, "", err.Error())
-			}
-			idInt, _ := strconv.Atoi(meta.ID)
-			if util.IsNumInList(idInt, gss.Spec.ReserveGameServerIds) {
-				return "", NewResourceError(NotFoundError, PauseReason, "")
-			} else {
-				return "", NewResourceError(NotFoundError, NotExistReason, "")
-			}
+			return "", nil
 		}
 		return "", NewResourceError(ApiCallError, "", err.Error())
 	}
