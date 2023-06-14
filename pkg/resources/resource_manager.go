@@ -152,9 +152,14 @@ func (rm *ResourceManager) PauseResource(meta *ResourceMeta) error {
 		return NewResourceError(ApiCallError, "", err.Error())
 	}
 
+	idInt, _ := strconv.Atoi(meta.ID)
+	// check if already paused
+	if util.IsNumInList(idInt, gss.Spec.ReserveGameServerIds) {
+		return NewResourceError(NotFoundError, PauseReason, "")
+	}
+
 	// update GameServerSet
 	gss.Spec.Replicas = pointer.Int32(*gss.Spec.Replicas - 1)
-	idInt, _ := strconv.Atoi(meta.ID)
 	gss.Spec.ReserveGameServerIds = append(gss.Spec.ReserveGameServerIds, []int{idInt}...)
 	err = rm.Update(context.Background(), gss)
 	if err != nil {
