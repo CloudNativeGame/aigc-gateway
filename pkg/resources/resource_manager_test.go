@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	scheme = runtime.NewScheme()
+	schemeTest = runtime.NewScheme()
 )
 
 func init() {
-	utilruntime.Must(gameKruiseV1alpha1.AddToScheme(scheme))
+	utilruntime.Must(gameKruiseV1alpha1.AddToScheme(schemeTest))
 }
 
 func TestResourceManager_checkResourceMeta(t *testing.T) {
@@ -202,7 +202,7 @@ func TestResourceManager_ListResources(t *testing.T) {
 		for _, gss := range test.gssList {
 			objs = append(objs, gss)
 		}
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+		c := fake.NewClientBuilder().WithScheme(schemeTest).WithObjects(objs...).Build()
 		rm := &ResourceManager{Client: c}
 		actualResources, _ := rm.ListResources(test.namespaces, test.resourcesLabels)
 		var actualNum []int
@@ -276,7 +276,7 @@ func TestResourceManager_GetResource(t *testing.T) {
 
 	for caseNum, test := range tests {
 		objs := []client.Object{test.gs}
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+		c := fake.NewClientBuilder().WithScheme(schemeTest).WithObjects(objs...).Build()
 		rm := &ResourceManager{Client: c}
 		_, err := rm.GetResource(test.meta)
 		if !reflect.DeepEqual(test.isError, err != nil) {
@@ -366,7 +366,7 @@ func TestResourceManager_CreateResource(t *testing.T) {
 
 	for caseNum, test := range tests {
 		objs := []client.Object{test.gssBefore}
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+		c := fake.NewClientBuilder().WithScheme(schemeTest).WithObjects(objs...).Build()
 		rm := &ResourceManager{Client: c}
 		actualMeta, err := rm.CreateResource(test.meta)
 		if err != nil {
@@ -450,7 +450,7 @@ func TestResourceManager_PauseResource(t *testing.T) {
 
 	for caseNum, test := range tests {
 		objs := []client.Object{test.gssBefore}
-		c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build()
+		c := fake.NewClientBuilder().WithScheme(schemeTest).WithObjects(objs...).Build()
 		rm := &ResourceManager{Client: c}
 		err := rm.PauseResource(test.meta)
 
