@@ -24,19 +24,42 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 	})
 
 	router.GET("/resource/:namespace/:name/:id", func(ctx *gin.Context) {
-		// userInfo, err := getUserInfoFromSession(logtoConfig, ctx)
-		// sub := userInfo.Sub
-
-		// TODO add verify
-
 		name := ctx.Param("name")
 		namespace := ctx.Param("namespace")
 		id := ctx.Param("id")
 
-		rm := &resources.ResourceMeta{
-			Name:      name,
-			Namespace: namespace,
-			ID:        id,
+		session := sessions.Default(ctx)
+		logtoClient := client.NewLogtoClient(
+			logtoConfig,
+			&mem.SessionStorage{Session: session},
+		)
+
+		userInfo, err := logtoClient.FetchUserInfo()
+		if err != nil {
+			ctx.Error(err)
+		}
+		cm := userInfo.CustomData
+		key := fmt.Sprintf("%s-%s", namespace, name)
+
+		value := cm[key]
+		if value == nil {
+			ctx.String(403, "have no privilege to get the instance with ID %d", id)
+			return
+		}
+
+		rm := &resources.ResourceMeta{}
+		valueBytes, err := interfaceToBytes(value)
+		if err != nil {
+			ctx.Error(err)
+		}
+		err = json.Unmarshal(valueBytes, rm)
+		if err != nil {
+			ctx.Error(err)
+		}
+
+		if id != rm.ID || name != rm.Name || namespace != rm.Namespace {
+			ctx.String(403, "have no privilege to get the instance with ID %d", id)
+			return
 		}
 
 		// add json wrapper
@@ -77,6 +100,14 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 			cm = make(map[string]interface{})
 		}
 
+		key := fmt.Sprintf("%s-%s", namespace, name)
+
+		// check if already installed
+		if cm[key] != nil {
+			ctx.String(400, "already installed")
+			return
+		}
+
 		rm := &resources.ResourceMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -84,17 +115,11 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		// add json wrapper
 		resourceManager := resources.NewResourceManager()
-		resource, err := resourceManager.GetResource(rm)
-		if err == nil {
-			ctx.JSON(200, resource)
-		}
-
 		meta, err := resourceManager.CreateResource(rm)
 		if err != nil {
 			ctx.Error(err)
 		}
 
-		key := fmt.Sprintf("%s-%s", namespace, name)
 		cm[key] = meta
 
 		err = user.UpdateUserMetaData(userInfo.Sub, cm)
