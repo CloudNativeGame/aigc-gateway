@@ -2,15 +2,16 @@ package routers
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+
 	"github.com/CloudNativeGame/aigc-gateway/pkg/resources"
 	mem "github.com/CloudNativeGame/aigc-gateway/pkg/session"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/logto-io/go/client"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
 )
 
 var redirectURL = os.Getenv("Redirect_Url")

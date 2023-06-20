@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+
+	"github.com/CloudNativeGame/aigc-gateway/pkg/middleware"
 	"github.com/CloudNativeGame/aigc-gateway/pkg/routers"
 	"github.com/CloudNativeGame/aigc-gateway/pkg/utils"
 	"github.com/gin-contrib/sessions"
@@ -8,11 +11,11 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/logto-io/go/client"
-	"os"
 )
 
 func main() {
 	router := gin.Default()
+
 	// load templates
 	router.Delims("{[{", "}]}")
 	router.LoadHTMLGlob("aigc-dashboard/dist/*.html")
@@ -34,6 +37,8 @@ func main() {
 		MaxAge: 604800,
 	})
 	router.Use(sessions.Sessions("logto-session", store))
+	// middleware
+	router.Use(middleware.Cors())
 	routers.RegisterSignRouters(router, logtoConfig)
 	routers.RegisterResourceRouters(router, logtoConfig)
 
