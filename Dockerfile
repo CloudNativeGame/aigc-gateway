@@ -15,7 +15,7 @@ COPY . ./
 # Build
 #RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o aigc-gateway main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o aigc-gateway main.go
 
 # Optional:
 # To bind to a TCP port, runtime parameters must be supplied to the docker command.
@@ -24,6 +24,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o aigc-gateway main.go
 # https://docs.docker.com/engine/reference/builder/#expose
 
 FROM alpine:3.17
+
+RUN apk add --no-cache ca-certificates bash expat curl \
+  && rm -rf /var/cache/apk/*
+
 WORKDIR /app
 COPY --from=builder /app/aigc-gateway .
 #COPY ./aigc-gateway .
