@@ -4,6 +4,7 @@ import (
 	"context"
 	gamekruiseiov1alpha1 "github.com/openkruise/kruise-game/apis/v1alpha1"
 	"github.com/openkruise/kruise-game/pkg/util"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -212,6 +213,80 @@ func (rm *ResourceManager) RecoverResource(meta *ResourceMeta) (Resource, error)
 	}
 
 	return gs, nil
+}
+
+func (rm *ResourceManager) DeleteResource(meta *ResourceMeta) error {
+	if err := checkResourceMeta(meta, &metaNeed{ID: true, Name: true, Namespace: true}); err != nil {
+		return err
+	}
+
+	// get GameServerSet
+	gss := &gamekruiseiov1alpha1.GameServerSet{}
+	err := rm.Get(context.Background(), types.NamespacedName{
+		Name:      meta.Name,
+		Namespace: meta.Namespace,
+	}, gss)
+	if err != nil {
+		return NewResourceError(ApiCallError, "", err.Error())
+	}
+
+	idInt, _ := strconv.Atoi(meta.ID)
+	// check if gs exist or not
+	if !util.IsNumInList(idInt, gss.Spec.ReserveGameServerIds) {
+		// update GameServerSet to delete gs
+		gss.Spec.Replicas = pointer.Int32(*gss.Spec.Replicas - 1)
+		gss.Spec.ReserveGameServerIds = append(gss.Spec.ReserveGameServerIds, []int{idInt}...)
+		err = rm.Update(context.Background(), gss)
+		if err != nil {
+			return err
+		}
+	}
+
+	// delete pvcs related to gss
+	for _, vct := range gss.Spec.GameServerTemplate.VolumeClaimTemplates {
+		pvc := &v1.PersistentVolumeClaim{}
+		err = rm.Get(context.Background(), types.NamespacedName{
+			Name:      vct.GetName() + "-" + meta.Name + "-" + meta.ID,
+			Namespace: meta.Namespace,
+		}, pvc)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return NewResourceError(ApiCallError, "", err.Error())
+		}
+		err = rm.Delete(context.Background(), pvc)
+		if err != nil && !errors.IsNotFound(err) {
+			return NewResourceError(ApiCallError, "", err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (rm *ResourceManager) RestartResource(meta *ResourceMeta) error {
+	if err := checkResourceMeta(meta, &metaNeed{ID: true, Name: true, Namespace: true}); err != nil {
+		return err
+	}
+
+	// delete pod
+	pod := &v1.Pod{}
+	err := rm.Get(context.Background(), types.NamespacedName{
+		Name:      meta.Name + "-" + meta.ID,
+		Namespace: meta.Namespace,
+	}, pod)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return NewResourceError(ApiCallError, "", err.Error())
+	}
+	err = rm.Delete(context.Background(), pod)
+	if err != nil && !errors.IsNotFound(err) {
+		return NewResourceError(ApiCallError, "", err.Error())
+	}
+
+	return nil
 }
 
 type metaNeed struct {

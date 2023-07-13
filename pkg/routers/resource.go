@@ -222,6 +222,113 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 		ctx.Status(200)
 		return
 	})
+
+	router.DELETE("/resource/:namespace/:name", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		namespace := ctx.Param("namespace")
+
+		session := sessions.Default(ctx)
+		logtoClient := client.NewLogtoClient(
+			logtoConfig,
+			&mem.SessionStorage{Session: session},
+		)
+
+		userInfo, err := logtoClient.FetchUserInfo()
+
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		cm := userInfo.CustomData
+
+		key := fmt.Sprintf("%s-%s", namespace, name)
+		value := cm[key]
+		if value == nil {
+			ctx.Status(400)
+			return
+		}
+		valueBytes, err := interfaceToBytes(value)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		rm := &resources.ResourceMeta{}
+		err = json.Unmarshal(valueBytes, rm)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		// add json wrapper
+		resourceManager := resources.NewResourceManager()
+		err = resourceManager.DeleteResource(rm)
+		if err != nil {
+			ctx.Error(err)
+		}
+
+		cm[key] = nil
+
+		err = user.UpdateUserMetaData(userInfo.Sub, cm)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		ctx.Status(200)
+		return
+	})
+
+	router.POST("/resource/:namespace/:name/restart", func(ctx *gin.Context) {
+		name := ctx.Param("name")
+		namespace := ctx.Param("namespace")
+
+		session := sessions.Default(ctx)
+		logtoClient := client.NewLogtoClient(
+			logtoConfig,
+			&mem.SessionStorage{Session: session},
+		)
+
+		userInfo, err := logtoClient.FetchUserInfo()
+
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		cm := userInfo.CustomData
+
+		key := fmt.Sprintf("%s-%s", namespace, name)
+		value := cm[key]
+		if value == nil {
+			ctx.Status(400)
+			return
+		}
+		valueBytes, err := interfaceToBytes(value)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		rm := &resources.ResourceMeta{}
+		err = json.Unmarshal(valueBytes, rm)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		// add json wrapper
+		resourceManager := resources.NewResourceManager()
+		err = resourceManager.RestartResource(rm)
+		if err != nil {
+			ctx.Error(err)
+			return
+		}
+
+		ctx.Status(200)
+		return
+	})
 }
 
 func interfaceToBytes(data interface{}) ([]byte, error) {
