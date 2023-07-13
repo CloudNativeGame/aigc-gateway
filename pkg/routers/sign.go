@@ -58,6 +58,9 @@ func RegisterSignRouters(router *gin.Engine, logtoConfig *client.LogtoConfig) {
 		resourceManager := resources.NewResourceManager()
 
 		for _, info := range userInfo.CustomData {
+			if info == nil {
+				continue
+			}
 			valueBytes, err := interfaceToBytes(info)
 			if err != nil {
 				ctx.Error(err)

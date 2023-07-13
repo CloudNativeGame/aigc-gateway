@@ -98,6 +98,26 @@ export default {
         this.items = response.data
       }).catch((error) => {
       })
+    },
+    del: function () {
+      let engine = this.engine;
+      let name = engine.metadata.name;
+      let namespace = engine.metadata.namespace;
+
+      this.axios.delete("/resource/" + namespace + "/" + name).then((response) => {
+          this.items = response.data
+      }).catch((error) => {
+      })
+    },
+    restart: function () {
+      let engine = this.engine;
+      let name = engine.metadata.name;
+      let namespace = engine.metadata.namespace;
+
+      this.axios.post("/resource/" + namespace + "/" + name + "/restart").then((response) => {
+          this.items = response.data
+      }).catch((error) => {
+      })
     }
   },
   created: function () {
@@ -146,7 +166,7 @@ export default {
             ></v-progress-circular>
           </v-col>
         </v-row>
-        <v-row v-if="state!=='Pending'">
+        <v-row>
           <v-col cols="6" v-if="state==='Not Installed'">
             <v-btn flexbox height="48" width="100%" color="indigo-darken-3"
                    @click="confirm()">
@@ -167,6 +187,16 @@ export default {
           <v-col cols="6" v-if="state==='Running'">
             <v-btn flexbox height="48" width="100%" color="indigo-darken-3" @click="pause()">
               Pause
+            </v-btn>
+          </v-col>
+          <v-col cols="6" v-if="state!=='Not Installed'">
+            <v-btn flexbox height="48" width="100%" color="indigo-darken-3" @click="del()">
+              Uninstall
+            </v-btn>
+          </v-col>
+          <v-col cols="6" v-if="state!=='Not Installed' && state!=='Paused'">
+            <v-btn flexbox height="48" width="100%" color="indigo-darken-3" @click="restart()">
+              Restart
             </v-btn>
           </v-col>
         </v-row>
