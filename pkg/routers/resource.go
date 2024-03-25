@@ -6,6 +6,7 @@ import (
 	"github.com/CloudNativeGame/aigc-gateway/pkg/resources"
 	mem "github.com/CloudNativeGame/aigc-gateway/pkg/session"
 	"github.com/CloudNativeGame/aigc-gateway/pkg/user"
+	"github.com/CloudNativeGame/aigc-gateway/pkg/utils"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/logto-io/go/client"
@@ -16,7 +17,12 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 	// Add a link to perform a sign-in request on the home page
 	router.GET("/resources", func(ctx *gin.Context) {
 		rm := resources.NewResourceManager()
-		resources, err := rm.ListResources(nil, nil)
+		config, err := utils.ParseConfig("/etc/config/config.json")
+		if err != nil {
+			ctx.String(400, err.Error())
+		}
+
+		resources, err := rm.ListResources(config.Namespaces, config.GssLabels)
 		if err != nil {
 			ctx.String(400, err.Error())
 		}

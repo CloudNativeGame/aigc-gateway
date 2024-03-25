@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: logto
-          image: svhd/logto:latest # replace it with your exactly <image_name:tags>
+          image: svhd/logto:1.4 # replace it with your exactly <image_name:tags>
           command:
             - "sh"
             - "-c"

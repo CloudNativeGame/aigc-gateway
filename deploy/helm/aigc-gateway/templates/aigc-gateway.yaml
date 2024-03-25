@@ -36,7 +36,30 @@ spec:
           ports:
             - containerPort: 8090
               name: dashboard
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/etc/config"  # 挂载点路径
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: aigc-gateway-config
+            items:
+              - key: config.json
+                path: "config.json"  # 映射为容器内的文件名
       serviceAccountName: aigc-gateway
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aigc-gateway-config
+  namespace: {{ .Values.installation.namespace }}
+data:
+  config.json: |
+    {
+      "namespaces": ["default"],
+      "gss_labels": {}
+    }
 ---
 apiVersion: v1
 kind: Service

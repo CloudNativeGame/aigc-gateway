@@ -1,8 +1,8 @@
   installation:
     namespace: aigc-gateway
   image:
-    repository: registry.cn-hangzhou.aliyuncs.com/acs/aigc-gateway
-    tag: v1.1.0
+    repository: registry-cn-hangzhou.ack.aliyuncs.com/acs/aigc-gateway
+    tag: v1.2.0
   appId: "32qh5wp6c1q3jofy2myw"
   appSecret: "35mpn2dk62brjxaduy70"
   m2mId: "ezxyaol30ld99c7ns5ur"
