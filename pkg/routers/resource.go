@@ -3,6 +3,7 @@ package routers
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/CloudNativeGame/aigc-gateway/pkg/resources"
 	mem "github.com/CloudNativeGame/aigc-gateway/pkg/session"
 	"github.com/CloudNativeGame/aigc-gateway/pkg/user"
@@ -43,6 +44,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 		userInfo, err := logtoClient.FetchUserInfo()
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 		cm := userInfo.CustomData
 		key := fmt.Sprintf("%s-%s", namespace, name)
@@ -57,10 +60,14 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 		valueBytes, err := interfaceToBytes(value)
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 		err = json.Unmarshal(valueBytes, rm)
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		if id != rm.ID || name != rm.Name || namespace != rm.Namespace {
@@ -78,6 +85,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 				return
 			}
 			ctx.String(400, err.Error())
+
+			return
 		}
 
 		ctx.JSON(200, resource)
@@ -124,6 +133,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 		meta, err := resourceManager.CreateResource(rm)
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		cm[key] = meta
@@ -131,6 +142,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 		err = user.UpdateUserMetaData(userInfo.Sub, cm)
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		ctx.JSON(200, meta)
@@ -151,6 +164,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		cm := userInfo.CustomData
@@ -162,6 +177,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		rm := &resources.ResourceMeta{}
@@ -170,6 +187,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		// add json wrapper
@@ -178,6 +197,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.String(400, err.Error())
+
+			return
 		}
 		ctx.Status(200)
 	})
@@ -196,6 +217,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		cm := userInfo.CustomData
@@ -212,6 +235,8 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.Error(err)
+
+			return
 		}
 
 		rm := &resources.ResourceMeta{}
@@ -224,9 +249,10 @@ func RegisterResourceRouters(router *gin.Engine, logtoConfig *client.LogtoConfig
 
 		if err != nil {
 			ctx.String(400, err.Error())
+
+			return
 		}
 		ctx.Status(200)
-		return
 	})
 
 	router.DELETE("/resource/:namespace/:name", func(ctx *gin.Context) {

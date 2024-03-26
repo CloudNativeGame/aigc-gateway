@@ -12,9 +12,16 @@ export default {
       dialog: false,
       state: NOT_INSTALLED,
       server: {},
+      timeout:-100
     }
   },
   methods: {
+    clear: function(){
+      clearTimeout(this.timeout);
+    },
+    startFetch: function(){
+      window.location.reload();
+    },
     getData: function () {
       let engine = this.engine;
       let name = engine.metadata.name;
@@ -26,6 +33,7 @@ export default {
 
       if (customData == undefined) {
         this.state = NOT_INSTALLED
+        this.clear();
       }
 
       if (customData[key] != undefined) {
@@ -41,13 +49,16 @@ export default {
 
           if (status == "Ready" && networkStatus == "Ready") {
             this.state = RUNNING
+            this.clear();
           } else {
             this.state = PENDING
+            this.timeout = setTimeout(this.getData, 5000);
           }
 
         }).catch((error) => {
           if (error.response.status == 423) {
             this.state = PAUSED
+            this.clear();
           }
         })
       }
@@ -75,6 +86,7 @@ export default {
       this.axios.put("/resource/" + namespace + "/" + name).then((response) => {
         this.items = response.data
         this.dialog = false;
+        this.startFetch()
       }).catch((error) => {
         this.dialog = false;
       })
@@ -86,6 +98,7 @@ export default {
 
       this.axios.post("/resource/" + namespace + "/" + name + "/pause").then((response) => {
         this.items = response.data
+        this.startFetch()
       }).catch((error) => {
       })
     },
@@ -96,7 +109,9 @@ export default {
 
       this.axios.post("/resource/" + namespace + "/" + name + "/recover").then((response) => {
         this.items = response.data
+        this.startFetch()
       }).catch((error) => {
+        this.startFetch()
       })
     },
     del: function () {
