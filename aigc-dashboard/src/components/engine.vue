@@ -120,8 +120,10 @@ export default {
       let namespace = engine.metadata.namespace;
 
       this.axios.delete("/resource/" + namespace + "/" + name).then((response) => {
-          this.items = response.data
+        this.items = response.data
+        this.startFetch()
       }).catch((error) => {
+        this.startFetch()
       })
     },
     restart: function () {
@@ -130,8 +132,10 @@ export default {
       let namespace = engine.metadata.namespace;
 
       this.axios.post("/resource/" + namespace + "/" + name + "/restart").then((response) => {
-          this.items = response.data
+        this.items = response.data
+        this.startFetch()
       }).catch((error) => {
+        this.startFetch()
       })
     }
   },
